@@ -606,6 +606,82 @@ export function InputArea() {
     }
   }
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const clipboardItems = e.clipboardData?.items
+    if (!clipboardItems) return
+
+    const items = Array.from(clipboardItems)
+    const fileItems = items.filter(item => item.kind === 'file')
+    
+    if (fileItems.length === 0) {
+      // No files in clipboard, let browser handle text paste normally
+      return
+    }
+
+    // Prevent default to avoid inserting file names as text
+    e.preventDefault()
+
+    const next: PendingImageAttachment[] = []
+    const MAX_FILE_BYTES = 10_000_000 // 10MB for non-image files
+
+    for (const item of fileItems) {
+      const file = item.getAsFile()
+      if (!file) continue
+
+      // Handle images
+      if (file.type.startsWith('image/')) {
+        if (file.size > MAX_IMAGE_BYTES) {
+          setVoiceError(`Image ${file.name} exceeds ${(MAX_IMAGE_BYTES / 1_000_000).toFixed(1)}MB limit.`)
+          continue
+        }
+
+        try {
+          const dataUrl = await readFileAsDataUrl(file)
+          const content = dataUrl.includes(',') ? dataUrl.split(',')[1] || '' : ''
+          if (!content) continue
+          next.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            fileName: file.name,
+            mimeType: file.type || 'image/png',
+            content,
+            previewUrl: dataUrl,
+          })
+        } catch {
+          setVoiceError(`Failed to process ${file.name}`)
+        }
+      } else {
+        // Handle other file types (read as base64 for transmission)
+        if (file.size > MAX_FILE_BYTES) {
+          setVoiceError(`File ${file.name} exceeds ${(MAX_FILE_BYTES / 1_000_000).toFixed(1)}MB limit.`)
+          continue
+        }
+
+        try {
+          const dataUrl = await readFileAsDataUrl(file)
+          const content = dataUrl.includes(',') ? dataUrl.split(',')[1] || '' : ''
+          if (!content) continue
+          
+          // For non-images, still use previewUrl but it won't be an <img> tag
+          // ChatArea will need to handle this differently (show file icon + name)
+          next.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            fileName: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            content,
+            previewUrl: dataUrl, // Will be used for display logic
+          })
+        } catch {
+          setVoiceError(`Failed to process ${file.name}`)
+        }
+      }
+    }
+
+    if (next.length > 0) {
+      setAttachedImages((current) => [...current, ...next])
+      setVoiceError(null)
+    }
+  }
+
   const handleVoiceInput = async () => {
     if (!voiceSupported || isStreaming) return
 
@@ -728,11 +804,12 @@ export function InputArea() {
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onFocus={handleTextareaFocus}
           onBlur={handleTextareaBlur}
           onCompositionStart={handleCompositionStart}
           onCompositionEnd={handleCompositionEnd}
-          placeholder="Type a message..."
+          placeholder="Type a message... (Ctrl+V to paste images or files)"
           rows={1}
           aria-label="Message input"
           autoCorrect="on"

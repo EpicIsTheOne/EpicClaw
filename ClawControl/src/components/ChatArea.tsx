@@ -563,6 +563,10 @@ function MessageContent({ content, images, audioUrl }: { content: string; images
     [displayContent]
   )
 
+  // Separate images from other files based on mimeType
+  const imageFiles = images?.filter(img => img.mimeType?.startsWith('image/')) || []
+  const otherFiles = images?.filter(img => !img.mimeType?.startsWith('image/')) || []
+
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -611,9 +615,9 @@ function MessageContent({ content, images, audioUrl }: { content: string; images
           <span>Generating image...</span>
         </div>
       )}
-      {images && images.length > 0 && (
+      {imageFiles.length > 0 && (
         <div className="message-images">
-          {images.map((img, idx) => (
+          {imageFiles.map((img, idx) => (
             <img
               key={`${img.url}-${idx}`}
               className="message-image"
@@ -633,6 +637,26 @@ function MessageContent({ content, images, audioUrl }: { content: string; images
                 target.replaceWith(link)
               }}
             />
+          ))}
+        </div>
+      )}
+      {otherFiles.length > 0 && (
+        <div className="message-files">
+          {otherFiles.map((file, idx) => (
+            <a
+              key={`${file.url}-${idx}`}
+              href={file.url}
+              target="_blank"
+              rel="noopener"
+              className="message-file"
+              title={`Open ${file.alt || file.url}`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14,2 14,8 20,8" />
+              </svg>
+              <span className="message-file-name">{file.alt || 'File'}</span>
+            </a>
           ))}
         </div>
       )}

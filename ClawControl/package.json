@@ -2,6 +2,7 @@
   "name": "clawcontrol",
   "version": "1.4.0",
   "description": "Desktop and mobile client for OpenClaw AI assistant",
+  "homepage": "https://github.com/EpicIsTheOne/EpicClaw",
   "main": "dist-electron/main.js",
   "author": {
     "name": "ClawControl Team",
