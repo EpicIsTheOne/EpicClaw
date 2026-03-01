@@ -1,0 +1,140 @@
+{
+  "name": "clawcontrol",
+  "version": "1.4.0",
+  "description": "Desktop and mobile client for OpenClaw AI assistant",
+  "main": "dist-electron/main.js",
+  "author": {
+    "name": "ClawControl Team",
+    "email": "team@clawcontrol.app"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "npx vite",
+    "postinstall": "npx tsc -p plugins/capacitor-native-websocket/tsconfig.json",
+    "build": "npx vite build && npx electron-builder",
+    "build:win": "npx vite build && npx electron-builder --win",
+    "build:mac": "npx vite build && npx electron-builder --mac",
+    "preview": "npx vite preview",
+    "electron:dev": "npx vite",
+    "test": "npx vitest",
+    "test:run": "npx vitest run",
+    "test:coverage": "npx vitest run --coverage",
+    "test:connection": "node scripts/test-connection.js",
+    "lint": "eslint .",
+    "typecheck": "npx -p typescript tsc --noEmit",
+    "mobile:build": "npx vite build --config vite.config.mobile.ts",
+    "mobile:sync": "npx vite build --config vite.config.mobile.ts && npx cap sync && npx @capacitor/assets generate --android --splashBackgroundColor \"#06080a\" --iconBackgroundColor \"#06080a\" && node scripts/fix-android-edge-to-edge.js",
+    "mobile:ios": "npx vite build --config vite.config.mobile.ts && npx cap sync ios && npx @capacitor/assets generate --ios --splashBackgroundColor \"#06080a\" --iconBackgroundColor \"#06080a\" && node scripts/fix-ios-splash.js && npx cap open ios",
+    "mobile:android": "npx vite build --config vite.config.mobile.ts && npx cap sync android && npx @capacitor/assets generate --android --splashBackgroundColor \"#06080a\" --iconBackgroundColor \"#06080a\" && node scripts/fix-android-edge-to-edge.js && npx cap open android",
+    "mobile:dev": "npx vite --config vite.config.mobile.ts",
+    "mobile:assets": "npx @capacitor/assets generate --android --ios --splashBackgroundColor '#06080a' --iconBackgroundColor '#06080a'",
+    "build:linux": "npx vite build && npx electron-builder --linux"
+  },
+  "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/app-launcher": "^8.0.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
+    "@capawesome/capacitor-app-review": "^8.0.1",
+    "capacitor-native-websocket": "file:plugins/capacitor-native-websocket",
+    "date-fns": "^3.3.1",
+    "dompurify": "^3.3.1",
+    "marked": "^17.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.7.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
+    "@eslint/js": "^8.57.1",
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^14.2.0",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^17.3.0",
+    "jsdom": "^24.0.0",
+    "sharp": "^0.34.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-electron": "^0.28.0",
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vitest": "^1.2.2",
+    "wait-on": "^7.2.0",
+    "ws": "^8.19.0"
+  },
+  "build": {
+    "appId": "com.claw.control",
+    "productName": "ClawControl",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "build/icon.png"
+    }
+  }
+}

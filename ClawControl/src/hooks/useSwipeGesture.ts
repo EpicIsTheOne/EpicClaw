@@ -1,0 +1,136 @@
+import { useEffect, useRef } from 'react'
+
+export type SwipeDirection = 'left' | 'right'
+
+export interface SwipeCallbacks {
+  onSwipeStart?: (direction: SwipeDirection) => void
+  onSwipeMove?: (direction: SwipeDirection, progress: number) => void
+  /**
+   * completed=true: normal touchend (gesture finished)
+   * completed=false: cancelled/interrupted (touchcancel, multi-touch, etc)
+   */
+  onSwipeEnd?: (direction: SwipeDirection, completed: boolean) => void
+}
+
+interface TouchState {
+  startX: number
+  startY: number
+  startTime: number
+  direction: SwipeDirection | null
+  locked: boolean
+  cancelled: boolean
+}
+
+const EDGE_THRESHOLD = 20 // px from screen edge to trigger
+const DIRECTION_LOCK_DISTANCE = 10 // px before locking direction
+
+export function useSwipeGesture(callbacks: SwipeCallbacks) {
+  const callbacksRef = useRef(callbacks)
+  callbacksRef.current = callbacks
+
+  const touchState = useRef<TouchState | null>(null)
+
+  useEffect(() => {
+    const endGesture = (completed: boolean) => {
+      const state = touchState.current
+      touchState.current = null
+
+      if (!state || state.cancelled || !state.locked || !state.direction) return
+      callbacksRef.current.onSwipeEnd?.(state.direction, completed)
+    }
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Cancel active gesture on multi-touch
+      if (e.touches.length > 1) {
+        endGesture(false)
+        return
+      }
+
+      // Disabled when keyboard is visible
+      if (document.body.classList.contains('keyboard-visible')) return
+
+      const touch = e.touches[0]
+      const screenWidth = window.innerWidth
+      const x = touch.clientX
+
+      // Only activate for edge swipes
+      const isLeftEdge = x <= EDGE_THRESHOLD
+      const isRightEdge = x >= screenWidth - EDGE_THRESHOLD
+
+      if (!isLeftEdge && !isRightEdge) return
+
+      touchState.current = {
+        startX: x,
+        startY: touch.clientY,
+        startTime: Date.now(),
+        direction: null,
+        locked: false,
+        cancelled: false,
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const state = touchState.current
+      if (!state || state.cancelled) return
+
+      // Cancel on multi-touch
+      if (e.touches.length > 1) {
+        state.cancelled = true
+        // If we already started the gesture, ensure UI cleans up.
+        if (state.locked && state.direction) {
+          callbacksRef.current.onSwipeEnd?.(state.direction, false)
+        }
+        touchState.current = null
+        return
+      }
+
+      const touch = e.touches[0]
+      const dx = touch.clientX - state.startX
+      const dy = touch.clientY - state.startY
+      const absDx = Math.abs(dx)
+      const absDy = Math.abs(dy)
+
+      // Before locking direction, check if vertical movement dominates
+      if (!state.locked) {
+        const totalMove = absDx + absDy
+        if (totalMove >= DIRECTION_LOCK_DISTANCE) {
+          if (absDy > absDx) {
+            // Vertical scroll — cancel gesture
+            state.cancelled = true
+            touchState.current = null
+            return
+          }
+          // Lock horizontal direction
+          state.direction = dx > 0 ? 'right' : 'left'
+          state.locked = true
+          callbacksRef.current.onSwipeStart?.(state.direction)
+        }
+        return
+      }
+
+      // Calculate progress (0 to 1) based on screen width
+      const progress = Math.min(absDx / window.innerWidth, 1)
+      callbacksRef.current.onSwipeMove?.(state.direction!, progress)
+    }
+
+    const handleTouchEnd = () => {
+      endGesture(true)
+    }
+
+    const handleTouchCancel = () => {
+      endGesture(false)
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    document.addEventListener('touchmove', handleTouchMove, { passive: true })
+    document.addEventListener('touchend', handleTouchEnd, { passive: true })
+    document.addEventListener('touchcancel', handleTouchCancel, { passive: true })
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+      document.removeEventListener('touchcancel', handleTouchCancel)
+    }
+  }, [])
+}

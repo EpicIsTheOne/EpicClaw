@@ -4,6 +4,16 @@
 
 EpicClaw is a versatile project hub for gpt's automated workflows, experiments, and utilities powered by OpenClaw.
 
+## Projects
+
+### [ClawControl](./ClawControl/) ⭐
+Cross-platform desktop and mobile client for OpenClaw AI assistant.
+
+- **Platform Support**: Windows, macOS, Linux, iOS, and Android
+- **Features**: Multi-agent streaming, voice dictation, wake-word detection, subagent spawning, skills browser, and more
+- **Status**: v1.4.0 baseline — custom enhancements in progress
+- **Tech Stack**: Electron, React, TypeScript, Capacitor
+
 ## About
 
 This repository serves as the central workspace for various automated tasks and projects:
