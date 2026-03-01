@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawControl - Download Latest Builds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-deep: #06080a;
+            --bg-primary: #0d1117;
+            --bg-elevated: #161b22;
+            --bg-hover: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-cyan: #00d9ff;
+            --accent-cyan-dim: #00a3bf;
+            --accent-cyan-subtle: rgba(0, 217, 255, 0.1);
+            --border-subtle: rgba(240, 246, 252, 0.08);
+            --border-default: rgba(240, 246, 252, 0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--accent-cyan-subtle);
+            border: 1px solid var(--accent-cyan-dim);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px;
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            border: 1px solid var(--border-default);
+        }
+
+        .error h2 {
+            color: #ef4444;
+            margin-bottom: 10px;
+        }
+
+        .download-section {
+            display: none;
+        }
+
+        .download-section.visible {
+            display: block;
+        }
+
+        .release-info {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-default);
+        }
+
+        .release-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .release-notes {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .release-notes h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .release-notes p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .platform-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .platform-card:hover {
+            border-color: var(--accent-cyan-dim);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 217, 255, 0.15);
+        }
+
+        .platform-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .platform-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .platform-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--accent-cyan);
+            color: var(--bg-deep);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background: var(--accent-cyan-dim);
+            transform: translateY(-1px);
+        }
+
+        .download-btn.secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-default);
+        }
+
+        .download-btn.secondary:hover {
+            background: var(--bg-active);
+            border-color: var(--accent-cyan-dim);
+        }
+
+        .download-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ClawControl</h1>
+            <p class="subtitle">Cross-platform OpenClaw AI assistant client</p>
+            <div class="version-badge" id="version">Loading version...</div>
+        </header>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Fetching latest release from GitHub...</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;">
+            <h2>⚠️ Failed to load release</h2>
+            <p>Unable to fetch latest release from GitHub.</p>
+            <p style="margin-top: 15px;">
+                <a href="https://github.com/EpicIsTheOne/EpicClaw/releases" class="download-btn" style="display: inline-flex;">
+                    View releases on GitHub
+                </a>
+            </p>
+        </div>
+
+        <div class="download-section" id="download-section">
+            <div class="release-info">
+                <h2 id="release-title">Latest Release</h2>
+                <p class="release-date" id="release-date"></p>
+                <div class="release-notes" id="release-notes"></div>
+            </div>
+
+            <div class="platforms" id="platforms">
+                <!-- Platform cards will be injected here -->
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>
+                Download page powered by <a href="https://github.com/EpicIsTheOne/EpicClaw">EpicClaw</a> •
+                <a href="https://github.com/EpicIsTheOne/EpicClaw/issues">Report issues</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        const REPO_OWNER = 'EpicIsTheOne';
+        const REPO_NAME = 'EpicClaw';
+
+        async function fetchLatestRelease() {
+            const response = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/releases/latest');
+            if (!response.ok) throw new Error('Failed to fetch release');
+            return response.json();
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function parseMarkdown(markdown) {
+            return markdown
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^\* (.*$)/gim, '<li>$1</li>')
+                .replace(/^- (.*$)/gim, '<li>$1</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function renderPlatformCard(name, description, icon, downloads) {
+            var buttonsHtml = downloads.map(function(dl) {
+                return '<a href="' + dl.url + '" class="download-btn ' + (dl.secondary ? 'secondary' : '') + '">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>' +
+                    '<polyline points="7 10 12 15 17 10"></polyline>' +
+                    '<line x1="12" y1="15" x2="12" y2="3"></line>' +
+                    '</svg>' +
+                    dl.label +
+                    '</a>';
+            }).join('');
+
+            return '<div class="platform-card">' +
+                '<div class="platform-icon">' + icon + '</div>' +
+                '<h3 class="platform-name">' + name + '</h3>' +
+                '<p class="platform-description">' + description + '</p>' +
+                '<div class="download-buttons">' +
+                buttonsHtml +
+                '</div></div>';
+        }
+
+        function categorizeAssets(assets) {
+            var categories = {
+                windows: [],
+                mac: [],
+                linux: [],
+                ios: [],
+                android: []
+            };
+
+            assets.forEach(function(asset) {
+                var name = asset.name.toLowerCase();
+
+                if (name.indexOf('win') !== -1 || name.indexOf('.exe') !== -1) {
+                    if (name.indexOf('portable') !== -1) {
+                        categories.windows.push({ label: 'Download Portable', url: asset.browser_download_url, secondary: true });
+                    } else {
+                        categories.windows.unshift({ label: 'Download Installer', url: asset.browser_download_url, secondary: false });
+                    }
+                }
+                else if (name.indexOf('mac') !== -1 || name.indexOf('.dmg') !== -1) {
+                    if (name.indexOf('.zip') !== -1) {
+                        categories.mac.push({ label: 'Download ZIP', url: asset.browser_download_url, secondary: true });
+                    } else {
+                        categories.mac.unshift({ label: 'Download DMG', url: asset.browser_download_url, secondary: false });
+                    }
+                }
+                else if (name.indexOf('linux') !== -1 || name.indexOf('.deb') !== -1 || name.indexOf('appimage') !== -1) {
+                    if (name.indexOf('.deb') !== -1) {
+                        categories.linux.push({ label: 'Download .deb', url: asset.browser_download_url, secondary: false });
+                    } else if (name.indexOf('.AppImage') !== -1) {
+                        categories.linux.push({ label: 'Download AppImage', url: asset.browser_download_url, secondary: true });
+                    }
+                }
+                else if (name.indexOf('ios') !== -1 || name.indexOf('.ipa') !== -1) {
+                    categories.ios.push({ label: 'Download IPA', url: asset.browser_download_url, secondary: false });
+                }
+                else if (name.indexOf('android') !== -1 || name.indexOf('.apk') !== -1) {
+                    categories.android.push({ label: 'Download APK', url: asset.browser_download_url, secondary: false });
+                }
+            });
+
+            return categories;
+        }
+
+        async function init() {
+            var loadingEl = document.getElementById('loading');
+            var errorEl = document.getElementById('error');
+            var downloadSection = document.getElementById('download-section');
+            var versionEl = document.getElementById('version');
+            var releaseTitleEl = document.getElementById('release-title');
+            var releaseDateEl = document.getElementById('release-date');
+            var releaseNotesEl = document.getElementById('release-notes');
+            var platformsEl = document.getElementById('platforms');
+
+            try {
+                var release = await fetchLatestRelease();
+
+                loadingEl.style.display = 'none';
+                downloadSection.classList.add('visible');
+
+                versionEl.textContent = 'v' + release.tag_name;
+                releaseTitleEl.textContent = release.name || release.tag_name;
+                releaseDateEl.textContent = formatDate(release.published_at);
+
+                if (release.body) {
+                    releaseNotesEl.innerHTML = parseMarkdown(release.body);
+                } else {
+                    releaseNotesEl.innerHTML = '<p>No release notes available.</p>';
+                }
+
+                var categories = categorizeAssets(release.assets);
+
+                var cards = [
+                    {
+                        name: 'Windows',
+                        description: 'Native Windows app with NSIS installer',
+                        icon: '💻',
+                        downloads: categories.windows
+                    },
+                    {
+                        name: 'macOS',
+                        description: 'Universal binary for Intel and Apple Silicon',
+                        icon: '🍎',
+                        downloads: categories.mac
+                    },
+                    {
+                        name: 'Linux',
+                        description: 'AppImage and Debian packages available',
+                        icon: '🐧',
+                        downloads: categories.linux
+                    }
+                ];
+
+                if (categories.ios.length > 0) {
+                    cards.push({
+                        name: 'iOS',
+                        description: 'Side-load with Xcode or AltStore',
+                        icon: '📱',
+                        downloads: categories.ios
+                    });
+                }
+
+                if (categories.android.length > 0) {
+                    cards.push({
+                        name: 'Android',
+                        description: 'APK for manual installation',
+                        icon: '🤖',
+                        downloads: categories.android
+                    });
+                }
+
+                platformsEl.innerHTML = cards
+                    .filter(function(card) { return card.downloads.length > 0; })
+                    .map(function(card) { return renderPlatformCard(card.name, card.description, card.icon, card.downloads); })
+                    .join('');
+
+            } catch (error) {
+                console.error('Error fetching release:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
