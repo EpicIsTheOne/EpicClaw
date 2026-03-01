@@ -49,6 +49,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Add Android platform (if not exists)
+        run: npx cap add android || echo "Android platform already exists"
+
       - name: Sync Android project
         run: npx cap sync android
 
